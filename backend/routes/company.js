@@ -71,10 +71,11 @@ router.put('/jobs/:id', authorize('company'), async (req, res) => {
   }
 });
 
-// Public: list all companies (for admin/students)
+// List companies: admin sees all, others see verified only
 router.get('/', async (req, res) => {
   try {
-    const companies = await CompanyProfile.find({ verified: true }).select('-__v').sort('companyName');
+    const filter = req.user?.role === 'admin' ? {} : { verified: true };
+    const companies = await CompanyProfile.find(filter).select('-__v').sort('companyName');
     res.json(companies);
   } catch (error) {
     res.status(500).json({ message: error.message });

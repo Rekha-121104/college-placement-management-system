@@ -2,6 +2,33 @@ import { useEffect, useState } from 'react';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 
+function AcademicRecordsSync({ onSync }) {
+  const [records, setRecords] = useState('');
+  const [syncing, setSyncing] = useState(false);
+  const handleSync = async (e) => {
+    e.preventDefault();
+    try {
+      const parsed = JSON.parse(records);
+      if (!Array.isArray(parsed)) throw new Error('Must be array');
+      setSyncing(true);
+      await api.post('/integrations/academic-records/sync', { records: parsed });
+      toast.success('Academic records synced');
+      setRecords('');
+      onSync?.();
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Invalid JSON. Use format: [{"semester":1,"sgpa":8.5,"cgpa":8.5}]');
+    } finally {
+      setSyncing(false);
+    }
+  };
+  return (
+    <form onSubmit={handleSync} className="flex gap-2">
+      <textarea value={records} onChange={(e) => setRecords(e.target.value)} className="input text-sm flex-1" rows={2} placeholder='[{"semester":1,"sgpa":8.5,"cgpa":8.5},{"semester":2,"sgpa":9,"cgpa":8.75}]' />
+      <button type="submit" disabled={syncing || !records.trim()} className="btn-primary shrink-0">Sync</button>
+    </form>
+  );
+}
+
 export default function StudentProfilePage() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -108,6 +135,23 @@ export default function StudentProfilePage() {
         </div>
         <button type="submit" disabled={saving} className="btn-primary">Save Profile</button>
       </form>
+
+      {/* Academic Records Integration */}
+      <div className="card mt-8">
+        <h2 className="font-semibold mb-2">Academic Records</h2>
+        <p className="text-slate-600 text-sm mb-4">Sync grades and transcripts from your college ERP/LMS. Your CGPA will be updated automatically.</p>
+        {profile?.academicRecords?.length > 0 && (
+          <div className="mb-4 space-y-2">
+            {profile.academicRecords.map((r, i) => (
+              <div key={i} className="flex justify-between text-sm bg-slate-50 p-2 rounded">
+                <span>Semester {r.semester}</span>
+                <span>SGPA: {r.sgpa} | CGPA: {r.cgpa}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        <AcademicRecordsSync onSync={() => api.get('/students/profile').then(({ data }) => setProfile(data))} />
+      </div>
     </div>
   );
 }

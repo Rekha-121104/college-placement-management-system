@@ -17,6 +17,9 @@ export default function CompanyApplications() {
   const [loading, setLoading] = useState(true);
   const [scheduling, setScheduling] = useState(null);
   const [scheduleForm, setScheduleForm] = useState({ applicationId: '', scheduledAt: '', type: 'virtual', duration: 30 });
+  const [offerForm, setOfferForm] = useState({ applicationId: '', ctc: '', joiningDate: '', companyFeedback: '' });
+  const [feedbackForm, setFeedbackForm] = useState({ applicationId: '', feedback: '' });
+  const [updating, setUpdating] = useState(null);
 
   useEffect(() => {
     api.get('/companies/jobs').then(({ data }) => {
@@ -30,13 +33,40 @@ export default function CompanyApplications() {
     api.get(`/applications/job/${selectedJob}`).then(({ data }) => setApplications(data)).catch(console.error).finally(() => setLoading(false));
   }, [selectedJob]);
 
-  const updateStatus = async (appId, status, feedback) => {
+  const updateStatus = async (appId, status, feedback, offerDetails) => {
+    setUpdating(appId);
     try {
-      await api.patch(`/applications/${appId}/status`, { status, companyFeedback: feedback });
+      await api.patch(`/applications/${appId}/status`, { status, companyFeedback: feedback, offerDetails });
       toast.success('Updated');
       setApplications((prev) => prev.map((a) => (a._id === appId ? { ...a, status } : a)));
+      setOfferForm({ applicationId: '', ctc: '', joiningDate: '', companyFeedback: '' });
+      setFeedbackForm({ applicationId: '', feedback: '' });
     } catch (e) {
       toast.error(e.response?.data?.message || 'Failed');
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const extendOffer = async (e) => {
+    e.preventDefault();
+    setUpdating(offerForm.applicationId);
+    try {
+      await api.patch(`/applications/${offerForm.applicationId}/status`, {
+        status: 'offer_extended',
+        companyFeedback: offerForm.companyFeedback,
+        offerDetails: {
+          ctc: offerForm.ctc ? parseFloat(offerForm.ctc) : undefined,
+          joiningDate: offerForm.joiningDate || undefined,
+        },
+      });
+      toast.success('Offer extended!');
+      setApplications((prev) => prev.map((a) => (a._id === offerForm.applicationId ? { ...a, status: 'offer_extended' } : a)));
+      setOfferForm({ applicationId: '', ctc: '', joiningDate: '', companyFeedback: '' });
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed');
+    } finally {
+      setUpdating(null);
     }
   };
 
@@ -87,15 +117,43 @@ export default function CompanyApplications() {
               <div className="flex flex-col gap-2 shrink-0">
                 {['submitted', 'reviewed'].includes(app.status) && (
                   <>
-                    <button onClick={() => updateStatus(app._id, 'shortlisted')} className="btn-primary text-sm">Shortlist</button>
-                    <button onClick={() => updateStatus(app._id, 'rejected')} className="btn-secondary text-sm">Reject</button>
+                    <button onClick={() => updateStatus(app._id, 'shortlisted')} disabled={updating} className="btn-primary text-sm">Shortlist</button>
+                    <button onClick={() => updateStatus(app._id, 'rejected')} disabled={updating} className="btn-secondary text-sm">Reject</button>
+                    <button onClick={() => setFeedbackForm(feedbackForm.applicationId === app._id ? { applicationId: '', feedback: '' } : { ...feedbackForm, applicationId: app._id })} className="btn-secondary text-sm">Reject with feedback</button>
+                    {feedbackForm.applicationId === app._id && (
+                      <div className="mt-2">
+                        <input placeholder="Feedback for candidate" value={feedbackForm.feedback} onChange={(e) => setFeedbackForm({ ...feedbackForm, feedback: e.target.value })} className="input text-sm mb-1" />
+                        <button onClick={() => updateStatus(app._id, 'rejected', feedbackForm.feedback)} className="btn-danger text-sm">Confirm Reject</button>
+                      </div>
+                    )}
                   </>
                 )}
                 {app.status === 'shortlisted' && (
                   <button onClick={() => setScheduleForm({ ...scheduleForm, applicationId: app._id })} className="btn-primary text-sm">Schedule Interview</button>
                 )}
+                {app.status === 'interview_scheduled' && (
+                  <button onClick={() => setOfferForm({ ...offerForm, applicationId: app._id })} className="btn-primary text-sm">Extend Offer</button>
+                )}
               </div>
             </div>
+            {offerForm.applicationId === app._id && (
+              <form onSubmit={extendOffer} className="mt-4 p-4 bg-amber-50 rounded-lg flex flex-wrap gap-4 items-end">
+                <div>
+                  <label className="label">CTC (LPA)</label>
+                  <input type="number" step="0.01" value={offerForm.ctc} onChange={(e) => setOfferForm({ ...offerForm, ctc: e.target.value })} className="input w-32" placeholder="e.g. 8.5" />
+                </div>
+                <div>
+                  <label className="label">Joining Date</label>
+                  <input type="date" value={offerForm.joiningDate} onChange={(e) => setOfferForm({ ...offerForm, joiningDate: e.target.value })} className="input" />
+                </div>
+                <div className="flex-1 min-w-[200px]">
+                  <label className="label">Feedback (optional)</label>
+                  <input value={offerForm.companyFeedback} onChange={(e) => setOfferForm({ ...offerForm, companyFeedback: e.target.value })} className="input" placeholder="Message to candidate" />
+                </div>
+                <button type="submit" disabled={updating} className="btn-primary">Extend Offer</button>
+                <button type="button" onClick={() => setOfferForm({ applicationId: '', ctc: '', joiningDate: '', companyFeedback: '' })} className="btn-secondary">Cancel</button>
+              </form>
+            )}
             {scheduleForm.applicationId === app._id && (
               <form onSubmit={scheduleInterview} className="mt-4 p-4 bg-slate-50 rounded-lg flex flex-wrap gap-4 items-end">
                 <div>

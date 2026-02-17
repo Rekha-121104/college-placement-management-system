@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import api from '../../services/api';
+import toast from 'react-hot-toast';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend } from 'chart.js';
 import { Bar, Line } from 'react-chartjs-2';
 
@@ -9,6 +10,8 @@ export default function AdminReports() {
   const [trends, setTrends] = useState(null);
   const [driveReports, setDriveReports] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [importJson, setImportJson] = useState('');
+  const [importing, setImporting] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -28,6 +31,37 @@ export default function AdminReports() {
       { label: 'Applications', data: trends.applicationsByMonth.map((d) => d.count), borderColor: '#0ea5e9', backgroundColor: 'rgba(14,165,233,0.2)', fill: true },
       { label: 'Placed', data: trends.applicationsByMonth.map((d) => d.placed), borderColor: '#14b8a6', backgroundColor: 'rgba(20,184,166,0.2)', fill: true },
     ],
+  };
+
+  const handleExport = async (type) => {
+    try {
+      const endpoint = type === 'companies' ? '/integrations/companies/export' : '/integrations/jobs/export';
+      const { data } = await api.get(endpoint);
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `placement-${type}-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      toast.success('Exported');
+    } catch (e) {
+      toast.error('Export failed');
+    }
+  };
+
+  const handleImportCompanies = async (e) => {
+    e.preventDefault();
+    try {
+      const companies = JSON.parse(importJson);
+      if (!Array.isArray(companies)) throw new Error('Must be array');
+      setImporting(true);
+      const { data } = await api.post('/integrations/companies/import', { companies });
+      toast.success(`Imported: ${data.imported}, Skipped: ${data.skipped}`);
+      setImportJson('');
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Invalid JSON');
+    } finally {
+      setImporting(false);
+    }
   };
 
   const departmentChart = trends?.placementByDepartment && {
@@ -53,6 +87,19 @@ export default function AdminReports() {
         )}
       </div>
       <div className="card">
+        <h2 className="font-semibold mb-4">Data Import / Export</h2>
+        <p className="text-slate-600 text-sm mb-4">Import companies from JSON or export data for backup/coordination with external systems.</p>
+        <div className="flex flex-wrap gap-4 mb-4">
+          <button onClick={() => handleExport('companies')} className="btn-secondary">Export Companies</button>
+          <button onClick={() => handleExport('jobs')} className="btn-secondary">Export Jobs</button>
+        </div>
+        <form onSubmit={handleImportCompanies} className="space-y-2">
+          <label className="label">Import Companies (JSON array)</label>
+          <textarea value={importJson} onChange={(e) => setImportJson(e.target.value)} className="input font-mono text-sm" rows={4} placeholder='[{"companyName":"ABC Corp","contactPerson":"John","contactEmail":"john@abc.com","industry":"IT"}]' />
+          <button type="submit" disabled={importing || !importJson.trim()} className="btn-primary">Import</button>
+        </form>
+      </div>
+      <div className="card mt-6">
         <h2 className="font-semibold mb-4">Placement Drive Performance</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">

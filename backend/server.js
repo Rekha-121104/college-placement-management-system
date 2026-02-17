@@ -10,6 +10,7 @@ import interviewRoutes from './routes/interview.js';
 import placementDriveRoutes from './routes/placementDrive.js';
 import jobsRoutes from './routes/jobs.js';
 import reportRoutes from './routes/reports.js';
+import integrationRoutes from './routes/integrations.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -34,6 +35,7 @@ app.use('/api/interviews', interviewRoutes);
 app.use('/api/placement-drives', placementDriveRoutes);
 app.use('/api/jobs', jobsRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/integrations', integrationRoutes);
 
 app.use(errorHandler);
 

@@ -4,6 +4,7 @@ import Application from '../models/Application.js';
 import Job from '../models/Job.js';
 import StudentProfile from '../models/StudentProfile.js';
 import CompanyProfile from '../models/CompanyProfile.js';
+import { sendApplicationStatusUpdate, sendOfferNotification } from '../services/notificationService.js';
 
 const router = express.Router();
 
@@ -69,7 +70,7 @@ router.get('/job/:jobId', authorize('company'), async (req, res) => {
 router.patch('/:id/status', authorize('company'), async (req, res) => {
   try {
     const { status, companyFeedback, hiringDecision, offerDetails } = req.body;
-    const app = await Application.findById(req.params.id).populate('job');
+    const app = await Application.findById(req.params.id).populate('job').populate('student');
     if (!app) return res.status(404).json({ message: 'Application not found' });
     const company = await CompanyProfile.findOne({ user: req.user._id });
     if (app.job.company.toString() !== company._id.toString()) {
@@ -82,6 +83,17 @@ router.patch('/:id/status', authorize('company'), async (req, res) => {
     app.reviewedAt = new Date();
     app.reviewedBy = req.user._id;
     await app.save();
+    // Send notifications
+    const studentProfile = await StudentProfile.findById(app.student._id).populate('user', 'email');
+    const studentEmail = studentProfile?.user?.email;
+    if (studentEmail) {
+      if (status && ['shortlisted', 'rejected', 'reviewed'].includes(status)) {
+        await sendApplicationStatusUpdate(studentEmail, company.companyName, app.job.title, status);
+      }
+      if (status === 'offer_extended') {
+        await sendOfferNotification(studentEmail, company.companyName, app.job.title, offerDetails);
+      }
+    }
     res.json(app);
   } catch (error) {
     res.status(500).json({ message: error.message });

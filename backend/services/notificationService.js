@@ -50,3 +50,26 @@ export const sendInterviewReminder = async (studentEmail, companyName, scheduled
   `;
   await sendEmail(studentEmail, `Reminder: Interview - ${companyName}`, html);
 };
+
+export const sendApplicationStatusUpdate = async (studentEmail, companyName, jobTitle, status) => {
+  const html = `
+    <h2>Application Status Update</h2>
+    <p>Your application for <strong>${jobTitle}</strong> at <strong>${companyName}</strong> has been updated.</p>
+    <p><strong>Status:</strong> ${status.replace(/_/g, ' ')}</p>
+    <p>Log in to PlacementHub to view details.</p>
+  `;
+  await sendEmail(studentEmail, `Application Update - ${companyName}`, html);
+};
+
+export const sendOfferNotification = async (studentEmail, companyName, jobTitle, offerDetails) => {
+  const ctc = offerDetails?.ctc ? `CTC: ${offerDetails.ctc}` : '';
+  const joining = offerDetails?.joiningDate ? `Joining: ${new Date(offerDetails.joiningDate).toLocaleDateString()}` : '';
+  const html = `
+    <h2>Congratulations! Offer Received</h2>
+    <p><strong>${companyName}</strong> has extended an offer for <strong>${jobTitle}</strong>.</p>
+    ${ctc ? `<p>${ctc}</p>` : ''}
+    ${joining ? `<p>${joining}</p>` : ''}
+    <p>Log in to PlacementHub to accept or decline the offer.</p>
+  `;
+  await sendEmail(studentEmail, `Offer from ${companyName}`, html);
+};

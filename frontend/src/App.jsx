@@ -12,6 +12,7 @@ import CompanyDashboard from './pages/company/Dashboard';
 import CompanyJobs from './pages/company/Jobs';
 import CompanyApplications from './pages/company/Applications';
 import CompanyInterviews from './pages/company/Interviews';
+import CompanyProfile from './pages/company/Profile';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminDrives from './pages/admin/PlacementDrives';
 import AdminReports from './pages/admin/Reports';
@@ -40,6 +41,7 @@ export default function App() {
         <Route path="company/jobs" element={<ProtectedRoute roles={['company']}><CompanyJobs /></ProtectedRoute>} />
         <Route path="company/applications/:jobId?" element={<ProtectedRoute roles={['company']}><CompanyApplications /></ProtectedRoute>} />
         <Route path="company/interviews" element={<ProtectedRoute roles={['company']}><CompanyInterviews /></ProtectedRoute>} />
+        <Route path="company/profile" element={<ProtectedRoute roles={['company']}><CompanyProfile /></ProtectedRoute>} />
         <Route path="admin" element={<ProtectedRoute roles={['admin']}><AdminDashboard /></ProtectedRoute>} />
         <Route path="admin/drives" element={<ProtectedRoute roles={['admin']}><AdminDrives /></ProtectedRoute>} />
         <Route path="admin/reports" element={<ProtectedRoute roles={['admin']}><AdminReports /></ProtectedRoute>} />

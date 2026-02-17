@@ -26,6 +26,7 @@ export default function Layout() {
       { to: '/company/jobs', label: 'Jobs', icon: FiBriefcase },
       { to: '/company/applications', label: 'Applications', icon: FiUser },
       { to: '/company/interviews', label: 'Interviews', icon: FiSettings },
+      { to: '/company/profile', label: 'Profile', icon: FiUser },
     ],
     admin: [
       { to: '/admin', label: 'Dashboard', icon: FiBarChart2 },
