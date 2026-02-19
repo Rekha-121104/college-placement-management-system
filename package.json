@@ -13,9 +13,5 @@
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
-  },
-  "scripts":{
-    "start": "node server.js",
-    "dev": "nodemon server.js"
   }
 }

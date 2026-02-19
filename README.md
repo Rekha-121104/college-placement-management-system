@@ -62,6 +62,14 @@ This runs the backend on `http://localhost:5000` and frontend on `http://localho
 - **Jitsi Meet** (default): No setup. Virtual interviews create Jitsi rooms automatically.
 - **Daily.co**: Add `DAILY_API_KEY` to `.env` for Daily.co rooms. Get a free key at [daily.co](https://dashboard.daily.co/).
 
+### Automated Reminders
+
+The system automatically sends interview reminders:
+- **24 hours before** interview
+- **1 hour before** interview
+
+Reminders run every hour via a background scheduler. Ensure SMTP is configured for email delivery.
+
 ### Admin Setup
 
 Create the first admin user via API:

@@ -39,39 +39,50 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen flex">
-      <aside className="w-64 bg-slate-900 text-white flex flex-col">
-        <div className="p-6 border-b border-slate-700">
-          <h1 className="font-display font-bold text-xl text-primary-400">PlacementHub</h1>
-          <p className="text-slate-400 text-sm mt-0.5 capitalize">{user.role}</p>
+      <aside className="w-64 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white flex flex-col shadow-2xl border-r border-slate-700/50">
+        <div className="p-6 border-b border-slate-700/50 bg-gradient-to-r from-primary-600/10 to-blue-600/10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-blue-600 flex items-center justify-center shadow-lg">
+              <FiBriefcase className="text-white" size={20} />
+            </div>
+            <div>
+              <h1 className="font-display font-bold text-xl bg-gradient-to-r from-primary-400 to-blue-400 bg-clip-text text-transparent">PlacementHub</h1>
+              <p className="text-slate-400 text-xs mt-0.5 capitalize font-medium">{user.role}</p>
+            </div>
+          </div>
         </div>
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {items.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-lg transition ${
-                  isActive ? 'bg-primary-600 text-white' : 'text-slate-300 hover:bg-slate-800'
+                `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
+                  isActive 
+                    ? 'bg-gradient-to-r from-primary-600 to-blue-600 text-white shadow-lg shadow-primary-500/30' 
+                    : 'text-slate-300 hover:bg-slate-800/50 hover:text-white hover:translate-x-1'
                 }`
               }
             >
-              <Icon size={20} />
-              {label}
+              <Icon size={20} className={({ isActive }) => isActive ? 'text-white' : 'group-hover:text-primary-400'} />
+              <span className="font-medium">{label}</span>
             </NavLink>
           ))}
         </nav>
-        <div className="p-4 border-t border-slate-700">
+        <div className="p-4 border-t border-slate-700/50 bg-slate-800/30">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition"
+            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-slate-300 hover:bg-red-600/20 hover:text-red-400 transition-all duration-200 hover:translate-x-1 group"
           >
-            <FiLogOut size={20} />
-            Logout
+            <FiLogOut size={20} className="group-hover:text-red-400" />
+            <span className="font-medium">Logout</span>
           </button>
         </div>
       </aside>
-      <main className="flex-1 overflow-auto bg-slate-50">
-        <Outlet />
+      <main className="flex-1 overflow-auto">
+        <div className="min-h-screen p-6 md:p-8">
+          <Outlet />
+        </div>
       </main>
     </div>
   );

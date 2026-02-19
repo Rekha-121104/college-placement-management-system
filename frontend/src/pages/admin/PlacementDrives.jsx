@@ -12,11 +12,25 @@ export default function AdminPlacementDrives() {
     eligibilityCriteria: { minCgpa: '', branches: '', maxBacklogs: '' },
   });
   const [companies, setCompanies] = useState([]);
+  const [selectedDrive, setSelectedDrive] = useState(null);
+  const [addingCompany, setAddingCompany] = useState(false);
 
   useEffect(() => {
     api.get('/placement-drives').then(({ data }) => setDrives(data)).catch(console.error).finally(() => setLoading(false));
     api.get('/companies').then(({ data }) => setCompanies(data)).catch(() => {});
   }, []);
+
+  const addCompanyToDrive = async (driveId, companyId) => {
+    try {
+      await api.post(`/placement-drives/${driveId}/companies`, { companyId });
+      toast.success('Company added to drive');
+      const { data } = await api.get('/placement-drives');
+      setDrives(data);
+      setSelectedDrive(null);
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed');
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -97,15 +111,37 @@ export default function AdminPlacementDrives() {
         {drives.map((d) => (
           <div key={d._id} className="card hover:shadow-md transition">
             <div className="flex justify-between items-start">
-              <div>
+              <div className="flex-1">
                 <h3 className="font-semibold">{d.name}</h3>
                 <p className="text-slate-500 text-sm">{format(new Date(d.startDate), 'PP')} - {format(new Date(d.endDate), 'PP')}</p>
                 <span className={`inline-block mt-2 px-3 py-0.5 rounded-full text-sm ${d.status === 'active' ? 'bg-green-100' : d.status === 'completed' ? 'bg-slate-100' : 'bg-blue-100'}`}>{d.status}</span>
+                {d.companies?.length > 0 && (
+                  <div className="mt-2 text-sm text-slate-600">
+                    Companies: {d.companies.map((c) => c.companyName || c).join(', ')}
+                  </div>
+                )}
               </div>
-              <div className="text-right text-sm text-slate-500">
-                <p>{d.companies?.length || 0} companies</p>
+              <div className="flex flex-col gap-2 shrink-0 ml-4">
+                <p className="text-sm text-slate-500 text-right">{d.companies?.length || 0} companies</p>
+                <button onClick={() => setSelectedDrive(selectedDrive === d._id ? null : d._id)} className="btn-secondary text-sm">
+                  {selectedDrive === d._id ? 'Cancel' : 'Add Company'}
+                </button>
               </div>
             </div>
+            {selectedDrive === d._id && (
+              <div className="mt-4 pt-4 border-t border-slate-200">
+                <label className="label">Select Company</label>
+                <select onChange={(e) => e.target.value && addCompanyToDrive(d._id, e.target.value)} className="input max-w-md">
+                  <option value="">Choose a company...</option>
+                  {companies.filter((c) => {
+                    const driveCompanyIds = d.companies?.map((dc) => dc._id || dc.toString()) || [];
+                    return !driveCompanyIds.includes(c._id);
+                  }).map((c) => (
+                    <option key={c._id} value={c._id}>{c.companyName}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         ))}
         {drives.length === 0 && !showForm && <div className="card text-center py-12 text-slate-500">No placement drives. Create one to get started.</div>}

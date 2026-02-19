@@ -12,6 +12,7 @@ import jobsRoutes from './routes/jobs.js';
 import reportRoutes from './routes/reports.js';
 import integrationRoutes from './routes/integrations.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import { checkAndSendReminders } from './services/reminderScheduler.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -40,4 +41,10 @@ app.use('/api/integrations', integrationRoutes);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  // Start reminder scheduler - check every hour
+  setInterval(checkAndSendReminders, 60 * 60 * 1000);
+  // Run immediately on startup
+  checkAndSendReminders();
+});
