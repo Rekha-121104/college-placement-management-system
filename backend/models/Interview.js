@@ -12,6 +12,7 @@ const interviewSchema = new mongoose.Schema({
   location: { type: String },
   meetingLink: { type: String },
   meetingId: { type: String },
+  meetingProvider: { type: String },
   meetingPassword: { type: String },
   status: { 
     type: String, 

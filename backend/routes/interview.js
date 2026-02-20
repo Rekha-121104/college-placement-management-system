@@ -31,6 +31,8 @@ router.post('/', authorize('company'), async (req, res) => {
       meetingLink = meeting.url;
       meetingId = meeting.meetingId;
       meetingPassword = meeting.meetingPassword;
+      // store provider (e.g., 'jitsi' or 'daily') for frontend decisions
+      var meetingProvider = meeting.provider || null;
     }
     const interview = await Interview.create({
       application: applicationId,
@@ -43,6 +45,7 @@ router.post('/', authorize('company'), async (req, res) => {
       location: interviewType === 'in-person' ? location : null,
       meetingLink,
       meetingId,
+      meetingProvider,
       meetingPassword,
       status: 'scheduled',
     });
